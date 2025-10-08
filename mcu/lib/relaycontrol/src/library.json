@@ -1,0 +1,6 @@
+{
+    "name": "relaycontrol",
+    "version": "1.0.0",
+    "description": "A library to control relays via GPIO pins.",
+    "deppendencies": {}
+}

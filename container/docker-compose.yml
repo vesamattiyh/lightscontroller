@@ -3,7 +3,7 @@ services:
   esp32c6-dev:
     build: .\
     volumes:
-      - "./projects/:/usr/projects"
+      - "../mcu/:/usr/projects/lightscontroller"
     ports:
       - "3000:22"
     environment:
