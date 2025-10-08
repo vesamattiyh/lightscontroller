@@ -1,10 +1,15 @@
-version: "3.8"
 services:
   esp32c6-dev:
     build: .\
     volumes:
+      - extensioncache:/root/.vscode-server/extensions
       - "../mcu/:/usr/projects/lightscontroller"
     ports:
       - "3000:22"
     environment:
       - USER=root
+    privileged: true
+
+
+volumes:
+   extensioncache:
