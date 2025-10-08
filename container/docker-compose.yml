@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  esp32c6-dev:
+    build: .\
+    volumes:
+      - "./projects/:/usr/projects"
+    ports:
+      - "3000:22"
+    environment:
+      - USER=root
