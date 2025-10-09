@@ -1,8 +1,10 @@
 services:
   esp32c6-dev:
+    container_name: esp32-development
     build: .\
     volumes:
-      - extensioncache:/root/.vscode-server/extensions
+      - extensionCache:/root/.vscode-server/extensions
+      - platformioCache:/root/.platformio
       - "../mcu/:/usr/projects/lightscontroller"
     ports:
       - "3000:22"
@@ -10,6 +12,6 @@ services:
       - USER=root
     privileged: true
 
-
 volumes:
-   extensioncache:
+   extensionCache:
+   platformioCache:
