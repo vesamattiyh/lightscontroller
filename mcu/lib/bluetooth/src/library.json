@@ -1,0 +1,8 @@
+{
+    "name": "bleapi",
+    "version": "1.0.0",
+    "description": "A library to communicate via bluetooth low-energy.",
+    "deppendencies": {
+        "bt" : "*"
+    }
+}
