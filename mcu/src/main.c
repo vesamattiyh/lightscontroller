@@ -1,31 +1,22 @@
 /* Includes */
-/* STD APIs */
-#include <stdio.h>
-
-/* ESP APIs */
-#include "esp_log.h"
-#include "nvs_flash.h"
-
 /* FreeRTOS APIs */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-/* NimBLE stack APIs */
+#include "nvs_flash.h"
+#include "esp_log.h"
 #include "bleapi.h"
-#include "host/ble_hs.h"
-#include "host/ble_uuid.h"
-#include "host/util/util.h"
-#include "nimble/ble.h"
-#include "nimble/nimble_port.h"
-#include "nimble/nimble_port_freertos.h"
+#include "common.h"
+
+/* STD APIs */
+#include <stdio.h>
 
 /* Defines */
 
-
 void app_main() 
 {
-    const char *TAG = "main";
-    esp_err_t ret;
+    const char *TAG = "MAIN";
+    esp_err_t ret = ESP_OK;
 
     // initialize the flash - depencency for ble stack
     ret = nvs_flash_init();
@@ -41,8 +32,13 @@ void app_main()
         return;
     }
 
+    ble_setup();
 
+    for(;;){
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Running...");
+    };
 
-
-
+    return;
 }
+
