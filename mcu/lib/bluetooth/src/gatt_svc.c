@@ -1,0 +1,270 @@
+#include "common.h"
+#include "gatt_svc.h"
+
+static const char* TAG = "GATT_SVC";
+
+/* Automation IO service */
+static const ble_uuid16_t auto_io_svc_uuid = BLE_UUID16_INIT(0x1815);
+
+// static uint16_t led_chr_val_handle;
+
+// static const ble_uuid128_t led_chr_uuid =
+//     BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
+//                      0x12, 0x12, 0x25, 0x15, 0x00, 0x00);
+
+
+/* Relay characteristics */
+
+static const ble_uuid128_t relay1_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF1);
+
+static const ble_uuid128_t relay2_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF2);
+
+static const ble_uuid128_t relay3_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF3);
+
+static const ble_uuid128_t relay4_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF4);
+
+static const ble_uuid128_t relay5_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF5);
+
+static const ble_uuid128_t relay6_chr_uuid =
+    BLE_UUID128_INIT(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF6);
+
+static uint16_t relay_val_handle[6]; // Handles for each relay characteristic
+
+static int relay_access(uint16_t conn_handle, uint16_t attr_handle,
+                           struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    uint8_t relay_num = (uint8_t)(uintptr_t)arg;
+    uint8_t state;
+
+    if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+        // Extract 1-byte payload (0 = off, 1 = on)
+        state = ctxt->om->om_data[0];
+        printf("Relay %d set to %s\n", relay_num, state ? "ON" : "OFF");
+
+        // Here you could control a GPIO pin:
+        // gpio_set_level(relay_pins[relay_num - 1], state);
+
+        return 0; // success
+    }
+
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
+// static int led_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+//                           struct ble_gatt_access_ctxt *ctxt, void *arg) {
+//     /* Local variables */
+//     int rc;
+
+//     ESP_LOGI(TAG, "led_chr_access op=%d", ctxt->op);
+//     /* Handle access events */
+//     /* Note: LED characteristic is write only */
+//     switch (ctxt->op) {
+
+//     /* Write characteristic event */
+//     case BLE_GATT_ACCESS_OP_WRITE_CHR:
+//         /* Verify connection handle */
+//         if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+//             ESP_LOGI(TAG, "characteristic write; conn_handle=%d attr_handle=%d",
+//                      conn_handle, attr_handle);
+//         } else {
+//             ESP_LOGI(TAG,
+//                      "characteristic write by nimble stack; attr_handle=%d",
+//                      attr_handle);
+//         }
+
+//         /* Verify attribute handle */
+//         if (attr_handle == led_chr_val_handle) {
+//             /* Verify access buffer length */
+//             if (ctxt->om->om_len == 1) {
+//                 /* Turn the LED on or off according to the operation bit */
+//                 if (ctxt->om->om_data[0]) {
+//                     ESP_LOGI(TAG, "led turned on!");
+//                 } else {
+//                     ESP_LOGI(TAG, "led turned off!");
+//                 }
+//             } else {
+//                 goto error;
+//             }
+//             return rc;
+//         }
+//         goto error;
+
+//     /* Unknown event */
+//     default:
+//         goto error;
+//     }
+
+// error:
+//     ESP_LOGE(TAG,
+//              "unexpected access operation to led characteristic, opcode: %d",
+//              ctxt->op);
+//     return BLE_ATT_ERR_UNLIKELY;
+// }
+
+
+/* GATT Services table */
+
+static int relay_descriptor_access(uint16_t conn_handle, uint16_t attr_handle,
+                                    struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    const char *desc = (const char *)arg;
+
+    if (ctxt->op == BLE_GATT_ACCESS_OP_READ_DSC) {
+        os_mbuf_append(ctxt->om, desc, strlen(desc));
+        return 0; // success
+    }
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
+static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
+    /* Automation IO service */
+    {
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid = &auto_io_svc_uuid.u,
+        .characteristics =
+            (struct ble_gatt_chr_def[]) {
+            { .uuid = &relay1_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[0],
+              .arg = (void *)1,
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 1", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { .uuid = &relay2_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[1],
+              .arg = (void *)2,
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 2", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { .uuid = &relay3_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[2],
+              .arg = (void *)3, 
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 3", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { .uuid = &relay4_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[3],
+              .arg = (void *)4, 
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 4", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { .uuid = &relay5_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[4],
+              .arg = (void *)5, 
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 5", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { .uuid = &relay6_chr_uuid.u,
+              .access_cb = relay_access,
+              .flags = BLE_GATT_CHR_F_WRITE,
+              .val_handle = &relay_val_handle[5],
+              .arg = (void *)6,
+              .descriptors = (struct ble_gatt_dsc_def[]) {
+                USER_READ_DESCRIPTOR("Relay 6", relay_descriptor_access), 
+                {0}} // Terminator
+            },
+            { 0 } // terminator
+            }, // End of characteristics array
+    }, // End of service
+    
+    {
+        0, /* Termination, No more services. */
+    },
+};
+
+int gatt_svc_init(void){
+    int rc = 0;
+
+    /* GATT service initialization */
+    ble_svc_gatt_init();
+
+    /* Update GATT services counter */
+    rc = ble_gatts_count_cfg(gatt_svr_svcs);
+    if (rc != 0) {
+        ESP_LOGE(TAG, "failed to count GATT services, error code: %d", rc);
+        return rc;
+    }
+
+    /* Add GATT services */
+    rc = ble_gatts_add_svcs(gatt_svr_svcs);
+    if (rc != 0) {
+        ESP_LOGE(TAG, "failed to add GATT services error code: %d", rc);
+        return rc;
+    }
+
+    return rc;
+
+}
+
+void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
+    /* Local variables */
+    char buf[BLE_UUID_STR_LEN];
+    ESP_LOGI(TAG, "GATT service registered");
+    /* Handle GATT attributes register events */
+    switch (ctxt->op) {
+
+    /* Service register event */
+    case BLE_GATT_REGISTER_OP_SVC:
+        ESP_LOGD(TAG, "registered service %s with handle=%d",
+                 ble_uuid_to_str(ctxt->svc.svc_def->uuid, buf),
+                 ctxt->svc.handle);
+        break;
+
+    /* Characteristic register event */
+    case BLE_GATT_REGISTER_OP_CHR:
+        ESP_LOGD(TAG,
+                 "registering characteristic %s with "
+                 "def_handle=%d val_handle=%d",
+                 ble_uuid_to_str(ctxt->chr.chr_def->uuid, buf),
+                 ctxt->chr.def_handle, ctxt->chr.val_handle);
+        break;
+
+    /* Descriptor register event */
+    case BLE_GATT_REGISTER_OP_DSC:
+        ESP_LOGD(TAG, "registering descriptor %s with handle=%d",
+                 ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, buf),
+                 ctxt->dsc.handle);
+        break;
+
+    /* Unknown event */
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void gatt_svr_subscribe_cb(struct ble_gap_event *event) {
+    /* Check connection handle */
+    if (event->subscribe.conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+        ESP_LOGI(TAG, "subscribe event; conn_handle=%d attr_handle=%d",
+                 event->subscribe.conn_handle, event->subscribe.attr_handle);
+    } else {
+        ESP_LOGI(TAG, "subscribe by nimble stack; attr_handle=%d",
+                 event->subscribe.attr_handle);
+    }
+
+}

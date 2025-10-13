@@ -32,7 +32,10 @@ void app_main()
         return;
     }
 
-    ble_setup();
+    if(ble_setup() != ESP_OK){
+        ESP_LOGE(TAG, "Failed to start the BLE-API");
+        return;
+    }
 
     for(;;){
         vTaskDelay(5000 / portTICK_PERIOD_MS);
