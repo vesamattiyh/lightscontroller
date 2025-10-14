@@ -9,7 +9,6 @@
 #include "common.h"
 
 /* STD APIs */
-#include <stdio.h>
 
 /* Defines */
 
