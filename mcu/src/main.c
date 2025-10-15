@@ -7,14 +7,16 @@
 #include "esp_log.h"
 #include "bleapi.h"
 #include "common.h"
+#include "relaycontrol.h"
 
 /* STD APIs */
 
 /* Defines */
 
+static const char *TAG = "MAIN";
+
 void app_main() 
 {
-    const char *TAG = "MAIN";
     esp_err_t ret = ESP_OK;
 
     // initialize the flash - depencency for ble stack
@@ -35,6 +37,8 @@ void app_main()
         ESP_LOGE(TAG, "Failed to start the BLE-API");
         return;
     }
+
+    relay_setup();
 
     for(;;){
         vTaskDelay(5000 / portTICK_PERIOD_MS);

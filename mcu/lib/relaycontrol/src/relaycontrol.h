@@ -1,6 +1,8 @@
 #pragma once
 
-#include "common.h"
+/* Standard C Libraries */
+
+// ESP-Related APIs
 
 #define MAX_RELAYS 6
 

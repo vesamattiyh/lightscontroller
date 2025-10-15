@@ -1,5 +1,4 @@
 #include "relaycontrol.h"
-
 #include "driver/gpio.h"
 
 #define RELAY_GPIO_MASK ((1ULL << GPIO_NUM_12) | (1ULL << GPIO_NUM_13) | (1ULL << GPIO_NUM_14) | \
@@ -73,7 +72,7 @@ bool relay_set_state(int relay_num, bool state){
 
     relay_update_statusword();
 
-    return true;
+    return true; 
 }
 
 static void relay_update_statusword(void){
