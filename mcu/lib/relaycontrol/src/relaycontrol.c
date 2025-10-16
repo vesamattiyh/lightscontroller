@@ -1,7 +1,7 @@
 #include "relaycontrol.h"
 
-#define RELAY_GPIO_MASK ((1ULL << GPIO_NUM_12) | (1ULL << GPIO_NUM_13) | (1ULL << GPIO_NUM_14) | \
-                        (1ULL << GPIO_NUM_15) | (1ULL << GPIO_NUM_16) | (1ULL << GPIO_NUM_17))
+#define RELAY_GPIO_MASK ( (1ULL << GPIO_NUM_9) | (1ULL << GPIO_NUM_10) | (1ULL << GPIO_NUM_11) | \
+                        (1ULL << GPIO_NUM_18) | (1ULL << GPIO_NUM_19) | (1ULL << GPIO_NUM_20))
                        
 static const char *TAG = "RELAYCONTROL";
 static uint16_t relay_statusword = 0x0000; // Each bit represents the state of a relay (0 = off, 1 = on)

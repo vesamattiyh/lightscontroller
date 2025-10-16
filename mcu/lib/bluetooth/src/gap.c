@@ -8,6 +8,7 @@ static const char* TAG = "GAP";
 inline static void format_addr(char *addr_str, uint8_t addr[]);
 static void start_advertising(void);
 static int gap_event_handler(struct ble_gap_event *event, void *arg);
+static void set_random_addr(void);
 void gatt_svr_subscribe_cb(struct ble_gap_event *event);
 
 /* Private variables */
@@ -74,10 +75,12 @@ void adv_init(void) {
     int rc = 0;
     
     char addr_str[18] = {0};
-
+    
+    /* Make sure we have proper BT identity address set */
+    set_random_addr(); 
 
     /* Make sure we have proper BT identity address set */
-    rc = ble_hs_util_ensure_addr(0);
+    rc = ble_hs_util_ensure_addr(1);
     if (rc != 0) {
         ESP_LOGE(TAG, "device does not have any available bt address!");
         return;
@@ -187,6 +190,7 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
     switch (event->type) {
 
     case BLE_GAP_EVENT_CONNECT:
+
         /* A new connection was established or a connection attempt failed */
         ESP_LOGI(TAG, "connection %s; status=%d",
                 event->connect.status == 0 ? "established" : "failed",
@@ -202,6 +206,23 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
                 return rc;
             }
 
+            if(desc.sec_state.encrypted){
+                ESP_LOGI(TAG, "Link is encrypted");
+            } else {
+                ESP_LOGI(TAG, "Link is not encrypted");
+                rc = ble_gap_security_initiate(event->connect.conn_handle);
+                if (rc != 0) {
+                    ESP_LOGE(TAG,
+                            "failed to initiate security, error code: %d",
+                            rc);
+
+                    // ble_gap_terminate(event->connect.conn_handle,
+                    //                      BLE_ERR_REM_USER_CONN_TERM);
+
+                    return rc;
+                }
+            }
+
         /* Print connection descriptor and turn on the LED */
         print_conn_desc(&desc);
 
@@ -209,9 +230,10 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
         struct ble_gap_upd_params params = {.itvl_min = desc.conn_itvl,
                                             .itvl_max = desc.conn_itvl,
                                             .latency = 3,
-                                            .supervision_timeout =
-                                                desc.supervision_timeout};
+                                            .supervision_timeout = desc.supervision_timeout};
+
         rc = ble_gap_update_params(event->connect.conn_handle, &params);
+        
         if (rc != 0) {
             ESP_LOGE(TAG,
                     "failed to update connection parameters, error code: %d",
@@ -219,6 +241,7 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
             return rc;
         }
     }
+
     else {
         /* Connection failed; resume advertising */
         start_advertising();
@@ -294,8 +317,72 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
                  event->mtu.conn_handle, event->mtu.channel_id,
                  event->mtu.value);
         return rc;
-    }
+
+    
+    case BLE_GAP_EVENT_ENC_CHANGE:
+        /* Encryption has been enabled or disabled for this connection. */
+        if (event->enc_change.status == 0) {
+            ESP_LOGI(TAG, "connection encrypted!");
+        } else {
+            ESP_LOGE(TAG, "connection encryption failed, status: %d",
+                        event->enc_change.status);
+        }
+        return rc;
+
+
+    case BLE_GAP_EVENT_REPEAT_PAIRING:              /* Repeat pairing event */
+        /* Delete the old bond */
+        rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        if (rc != 0) {
+            ESP_LOGE(TAG, "failed to find connection, error code %d", rc);
+            return rc;
+        }
+        ble_store_util_delete_peer(&desc.peer_id_addr);
+
+        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+            * continue with pairing operation */
+        ESP_LOGI(TAG, "repairing...");
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
+
+
+    case BLE_GAP_EVENT_PASSKEY_ACTION:              /* Passkey action event */
+        /* Display action */
+        if (event->passkey.params.action == BLE_SM_IOACT_DISP) {
+            /* Generate passkey */
+            struct ble_sm_io pkey = {0};
+            pkey.action = event->passkey.params.action;
+            pkey.passkey = 100000 + esp_random() % 900000;
+            ESP_LOGI(TAG, "enter passkey %" PRIu32 " on the peer side",
+                        pkey.passkey);
+            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            if (rc != 0) {
+                ESP_LOGE(TAG,
+                            "failed to inject security manager io, error code: %d",
+                            rc);
+                return rc;
+            }
+        }
+
+        return rc;
+
+
+    }       // End of Switch
+
+    
         
     return rc;
 }
 
+static void set_random_addr(void) {
+    /* Local variables */
+    int rc = 0;
+    ble_addr_t addr;
+
+    /* Generate new non-resolvable private address */
+    rc = ble_hs_id_gen_rnd(0, &addr);
+    assert(rc == 0);
+
+    /* Set address */
+    rc = ble_hs_id_set_rnd(addr.val);
+    assert(rc == 0);
+}

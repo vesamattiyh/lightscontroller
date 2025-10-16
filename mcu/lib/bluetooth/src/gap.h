@@ -1,5 +1,7 @@
 #pragma once
 
+#include "esp_random.h"
+
 /* NimBLE GAP APIs */
 #include "host/ble_gap.h"
 #include "services/gap/ble_svc_gap.h"

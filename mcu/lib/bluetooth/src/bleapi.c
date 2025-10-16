@@ -59,6 +59,11 @@ int ble_setup(void) {
 static void nimble_host_config(void){
 
     /* Configure the host. */
+    ble_hs_cfg.sm_io_cap = BLE_HS_IO_DISPLAY_ONLY; /* Security related configuration */
+    ble_hs_cfg.sm_bonding = 1; /* Security related configuration */
+    ble_hs_cfg.sm_mitm = 1; /* Security related configuration */
+    ble_hs_cfg.sm_our_key_dist |= BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID; /* Security related configuration */
+    ble_hs_cfg.sm_their_key_dist |= BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID; /* Security related configuration */
     ble_hs_cfg.reset_cb = on_stack_reset;
     ble_hs_cfg.sync_cb = on_stack_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
