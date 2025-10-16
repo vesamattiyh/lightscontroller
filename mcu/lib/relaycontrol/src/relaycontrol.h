@@ -1,8 +1,12 @@
 #pragma once
 
 /* Standard C Libraries */
+#include <stdint.h>
+#include <stdbool.h>
 
 // ESP-Related APIs
+#include "driver/gpio.h"
+#include "esp_log.h"
 
 #define MAX_RELAYS 6
 
