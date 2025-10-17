@@ -284,13 +284,13 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg){
         ESP_LOGI(TAG, "subscribe event; conn_handle=%d attr_handle=%d "
                      "reason=%d prev_notify=%d cur_notify=%d "
                      "prev_indicate=%d cur_indicate=%d",
-                 event->subscribe.conn_handle,
-                 event->subscribe.attr_handle,
-                 event->subscribe.reason,
-                 event->subscribe.prev_notify,
-                 event->subscribe.cur_notify,
-                 event->subscribe.prev_indicate,
-                 event->subscribe.cur_indicate);
+                        event->subscribe.conn_handle,
+                        event->subscribe.attr_handle,
+                        event->subscribe.reason,
+                        event->subscribe.prev_notify,
+                        event->subscribe.cur_notify,
+                        event->subscribe.prev_indicate,
+                        event->subscribe.cur_indicate);
         
         /* GATT subscrribe event */
         gatt_svr_subscribe_cb(event);

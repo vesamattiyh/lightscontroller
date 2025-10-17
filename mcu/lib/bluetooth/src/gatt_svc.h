@@ -8,6 +8,8 @@
 /* NimBLE GAP APIs */
 #include "host/ble_gap.h"
 
+/* Custom APIs */
+#include "relaycontrol.h"
 
 /**
  * @brief Macro for initializing a user read descriptor.
@@ -27,6 +29,6 @@
     }
 
 /* Public function declarations */
+int gatt_svc_init(void);
 void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
 void gatt_svr_subscribe_cb(struct ble_gap_event *event);
-int gatt_svc_init(void);

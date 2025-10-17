@@ -6,13 +6,6 @@ static const char* TAG = "GATT_SVC";
 /* Automation IO service */
 static const ble_uuid16_t auto_io_svc_uuid = BLE_UUID16_INIT(0x1815);
 
-// static uint16_t led_chr_val_handle;
-
-// static const ble_uuid128_t led_chr_uuid =
-//     BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
-//                      0x12, 0x12, 0x25, 0x15, 0x00, 0x00);
-
-
 /* Relay characteristics */
 
 static const ble_uuid128_t relay1_chr_uuid =
@@ -49,10 +42,10 @@ static int relay_access(uint16_t conn_handle, uint16_t attr_handle,
     if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
         // Extract 1-byte payload (0 = off, 1 = on)
         state = ctxt->om->om_data[0];
-        printf("Relay %d set to %s\n", relay_num, state ? "ON" : "OFF");
+        ESP_LOGI(TAG, "Relay %d set to %s\n", relay_num, state ? "ON" : "OFF");
 
-        // Here you could control a GPIO pin:
-        // gpio_set_level(relay_pins[relay_num - 1], state);
+        // Control the relay hardware
+        relay_set_state(relay_num, state);
 
         return 0; // success
     }
@@ -74,7 +67,7 @@ static int relay_descriptor_access(uint16_t conn_handle, uint16_t attr_handle,
     return BLE_ATT_ERR_UNLIKELY;
 }
 
-static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
+struct ble_gatt_svc_def gatt_svr_svcs[] = {
     /* Automation IO service */
     {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -87,7 +80,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
               .val_handle = &relay_val_handle[0],
               .arg = (void *)1,
               .descriptors = (struct ble_gatt_dsc_def[]) {
-                USER_READ_DESCRIPTOR("Relay 1", relay_descriptor_access), 
+                USER_READ_DESCRIPTOR(relay_table[0].name, relay_descriptor_access),
                 {0}} // Terminator
             },
             { .uuid = &relay2_chr_uuid.u,
@@ -96,7 +89,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
               .val_handle = &relay_val_handle[1],
               .arg = (void *)2,
               .descriptors = (struct ble_gatt_dsc_def[]) {
-                USER_READ_DESCRIPTOR("Relay 2", relay_descriptor_access), 
+                USER_READ_DESCRIPTOR(relay_table[1].name, relay_descriptor_access), 
                 {0}} // Terminator
             },
             { .uuid = &relay3_chr_uuid.u,
