@@ -80,7 +80,7 @@ struct ble_gatt_svc_def gatt_svr_svcs[] = {
               .val_handle = &relay_val_handle[0],
               .arg = (void *)1,
               .descriptors = (struct ble_gatt_dsc_def[]) {
-                USER_READ_DESCRIPTOR(relay_table[0].name, relay_descriptor_access),
+                USER_READ_DESCRIPTOR("Relay 1", relay_descriptor_access),
                 {0}} // Terminator
             },
             { .uuid = &relay2_chr_uuid.u,
@@ -89,7 +89,7 @@ struct ble_gatt_svc_def gatt_svr_svcs[] = {
               .val_handle = &relay_val_handle[1],
               .arg = (void *)2,
               .descriptors = (struct ble_gatt_dsc_def[]) {
-                USER_READ_DESCRIPTOR(relay_table[1].name, relay_descriptor_access), 
+                USER_READ_DESCRIPTOR("Relay 2", relay_descriptor_access), 
                 {0}} // Terminator
             },
             { .uuid = &relay3_chr_uuid.u,
